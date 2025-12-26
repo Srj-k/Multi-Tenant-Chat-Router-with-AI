@@ -1,37 +1,25 @@
-# Node modules
+# Dependencies
 node_modules/
 
+# Build output
+dist/
+coverage/
+
 # Logs
-logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Environment
+.env
+.env.*
 
-# Coverage directory
-coverage/
-*.lcov
+# Prisma
+*.db
+*.sqlite
+*.sqlite3
+/src/generated/prisma/
 
-# TypeScript
-dist/
-*.tsbuildinfo
-
-# IDEs
+# IDE / OS
 .vscode/
 .idea/
-*.sublime-project
-*.sublime-workspace
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Mac system files
 .DS_Store
