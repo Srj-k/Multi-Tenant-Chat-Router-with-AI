@@ -1,7 +1,9 @@
 import express from "express";
-import type { Request, Response } from "express";
+import messageRoutes from "./routes/message.routes";
+import authRoutes from "./routes/auth.routes";
+import agentRoutes from "./routes/agents.routes";
+import adminRoutes from "./routes/admin.routes";
 import cors from "cors";
-import prisma from "./db/prisma";
 
 const app = express();
 const PORT = 4000;
@@ -9,29 +11,12 @@ const PORT = 4000;
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Backend is running");
-});
-
-app.post("/webhook/message", async (req: Request, res: Response) => {
-  const { message, businessId } = req.body;
-  const conversation = await prisma.conversation.create({
-    data: {
-      businessId,
-      department: "General",
-      status: "open",
-      messages: {
-        create: {
-          sender: "customer",
-          content: message,
-        },
-      },
-    },
-  });
-
-  res.json({ conversationId: conversation.id });
-});
+app.use("/api/messages", messageRoutes);
+app.use("/api/login", authRoutes);
+app.use("/api/agent", agentRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+``;

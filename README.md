@@ -112,7 +112,7 @@ This schema design represents mulit-tenant business model where each business ca
 ### Entity Relationships
 
 - A **Business** can have multiple **Conversations**
-- A **Business** can have multiple **Agents**
+- A **Business** can have multiple **Departments**
 - A **Conversation** can have multiple **Messages**
 - Each **Message** belongs to a single **Business**
 
@@ -122,15 +122,14 @@ This schema design represents mulit-tenant business model where each business ca
 model Business {
   id        String   @id @default(uuid())
   name      String
-  agents    Agent[]
+  departments    Department[]
   chats     Conversation[]
   createdAt DateTime @default(now())
 }
 
-model Agent {
+model Department {
   id         String   @id @default(uuid())
   name       String
-  department String
   businessId String
   business   Business @relation(fields: [businessId], references: [id])
   createdAt  DateTime @default(now())
@@ -155,3 +154,77 @@ model Message {
   createdAt      DateTime      @default(now())
 }
 ```
+
+## Day 3 - AI Routing and Message Flow
+
+- Implemented AI-based intent classification service
+
+- Automatically routes incoming messages to the correct department
+
+- Created a central routing layer decoupled from controllers
+
+- Added fallback routing for unknown intents
+
+### AI Routing Flow
+
+```
+Incoming Message
+        ↓
+Persist Message
+        ↓
+AI Intent Classification
+        ↓
+Department Mapping
+        ↓
+Conversation Assignment
+```
+
+### AI Intent Classification
+
+- Uses Google Gemini API
+- Divides into Sales, Support, Billing or General
+- If confidence is low falls back to General department
+
+## Day 4 - Admin and Agent Dashboard
+
+### Admin Capabilities
+
+- View all conversations for a business
+- View messages inside any conversation
+- Monitor department-wise traffic
+- Multi-tenant isolation enforced at API level
+
+### Admin Routes
+
+| Method | Endpoint                                            | Description                                   |
+| ------ | --------------------------------------------------- | --------------------------------------------- |
+| GET    | `/api/admin/conversations`                          | List all conversations for the business       |
+| GET    | `/api/admin/conversations/:conversationId`          | Get messages for a specific conversation      |
+| GET    | `/api/admin/agents`                                 | List all agents in the business               |
+| GET    | `/api/admin/departments`                            | List departments with conversation counts     |
+| PATCH  | `/api/admin/conversations/:conversationId/reassign` | Reassign a conversation to another department |
+
+### Agent Capabilities
+
+- View conversations assigned to their department
+- Read messages in real time (WebSocket-ready)
+- Reply to customer messages
+
+### Agent Routes
+
+## Agent API Endpoints
+
+| Method | Endpoint                                    | Description                                   |
+| ------ | ------------------------------------------- | --------------------------------------------- |
+| GET    | `/api/agent/chats`                          | List all conversations for agent’s department |
+| GET    | `/api/agent/chats/:conversationId`          | Get messages for a specific conversation      |
+| POST   | `/api/agent/chats/:conversationId/messages` | Send a message in a conversation              |
+
+### Authentication & Authorization (Mocked)
+
+- Authentication is mocked for assessment simplicity
+- Roles Supported
+  - Admin
+  - Agent
+- Role-Based Access Control
+- Middleware enforces role checks

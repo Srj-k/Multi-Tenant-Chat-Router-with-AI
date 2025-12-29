@@ -8,37 +8,76 @@ datasource db {
 }
 
 model Business {
-  id        String   @id @default(uuid())
-  name      String
-  agents    Agent[]
-  chats     Conversation[]
-  createdAt DateTime @default(now())
+  id          String         @id @default(uuid())
+  name        String
+  departments Department[]
+  chats       Conversation[]
+  users       User[]
+  createdAt   DateTime       @default(now())
 }
 
-model Agent {
-  id         String   @id @default(uuid())
+model Department {
+  id         String         @id @default(uuid())
   name       String
-  department String
   businessId String
-  business   Business @relation(fields: [businessId], references: [id])
-  createdAt  DateTime @default(now())
+  business   Business       @relation(fields: [businessId], references: [id])
+  chats      Conversation[]
+  users      User[]
+  createdAt  DateTime       @default(now())
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         UserType
+  businessId   String
+  departmentId String?
+
+  business   Business    @relation(fields: [businessId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  conversations Conversation[] @relation("AgentConversations")
 }
 
 model Conversation {
-  id         String    @id @default(uuid())
-  businessId String
-  department String
-  status     String
-  messages   Message[]
-  business   Business  @relation(fields: [businessId], references: [id])
-  createdAt  DateTime  @default(now())
+  id              String             @id @default(uuid())
+  businessId      String
+  departmentId    String?
+  assignedAgentId String?
+  status          ConversationStatus
+
+  business      Business    @relation(fields: [businessId], references: [id])
+  department    Department? @relation(fields: [departmentId], references: [id])
+  assignedAgent User?       @relation("AgentConversations", fields: [assignedAgentId], references: [id])
+
+  messages  Message[]
+  createdAt DateTime  @default(now())
 }
 
 model Message {
-  id             String        @id @default(uuid())
+  id             String     @id @default(uuid())
   conversationId String
-  sender         String
+  sender         SenderType
   content        String
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  createdAt      DateTime      @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  createdAt    DateTime     @default(now())
+}
+
+enum SenderType {
+  customer
+  agent
+  ai
+}
+
+enum UserType {
+  agent
+  admin
+}
+
+enum ConversationStatus {
+  open
+  in_progress
+  closed
 }
