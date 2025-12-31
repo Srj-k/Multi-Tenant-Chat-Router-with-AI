@@ -74,9 +74,6 @@ async function main() {
       ],
     });
   }
-
-  console.log("Seed completed successfully!");
-  console.log("Business ID:", business.id);
 }
 
 main()

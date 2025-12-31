@@ -5,7 +5,7 @@ import { routeMessage } from "../services/messageClassifier";
 const router = Router();
 
 // POST /api/messages
-router.post("/", async (req: Request, res: Response) => {
+router.post("/messages", async (req: Request, res: Response) => {
   try {
     const { businessId, content, sender } = req.body;
 
@@ -13,7 +13,6 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing fields" });
     }
 
-    // 1. Validate business
     const business = await prisma.business.findUnique({
       where: { id: businessId },
     });
@@ -22,25 +21,14 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Business not found" });
     }
 
-    // 2. Find or create conversation
-    let conversation = await prisma.conversation.findFirst({
-      where: {
+    let conversation = await prisma.conversation.create({
+      data: {
         businessId,
         status: "open",
       },
     });
 
-    if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: {
-          businessId,
-          status: "open",
-        },
-      });
-    }
-
-    // 3. Save message
-    await prisma.message.create({
+    const message = await prisma.message.create({
       data: {
         conversationId: conversation.id,
         sender,
@@ -48,10 +36,8 @@ router.post("/", async (req: Request, res: Response) => {
       },
     });
 
-    // 4. Route message using AI
     const aiResult = await routeMessage(content);
 
-    // 5. Update conversation
     await prisma.conversation.update({
       where: { id: conversation.id },
       data: {
@@ -67,6 +53,21 @@ router.post("/", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("Message routing error:", err);
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/business", async (req: Request, res: Response) => {
+  try {
+    const businesses = await prisma.business.findMany({
+      select: {
+        id: true,
+      },
+    });
+
+    res.json(businesses);
+  } catch (error) {
+    console.error("Fetch businesses error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

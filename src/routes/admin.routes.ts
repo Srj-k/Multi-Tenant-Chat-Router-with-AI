@@ -5,21 +5,44 @@ import prisma from "../db/prisma";
 
 const router = Router();
 
+// GET /api/admin/conversations
+// List all conversations for the business
+
 router.get(
   "/conversations",
   mockAuth,
   requireRole("admin"),
   async (req: Request, res: Response) => {
-    //Find all Conversations
     const chats = await prisma.conversation.findMany({
       where: {
         businessId: req.user!.businessId,
       },
+      include: {
+        department: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    res.json(chats);
+    // Transform response
+    const formattedChats = chats.map((chat) => ({
+      id: chat.id,
+      status: chat.status,
+      createdAt: chat.createdAt,
+      department: chat.department?.name ?? "Unknown",
+    }));
+
+    res.json(formattedChats);
   }
 );
+
+// GET /api/admin/conversations/:conversationId
+// Get full conversation with messages
 
 router.get(
   "/conversations/:conversationId",
@@ -46,6 +69,8 @@ router.get(
   }
 );
 
+// GET /api/admin/agents
+
 router.get(
   "/agents",
   mockAuth,
@@ -68,6 +93,8 @@ router.get(
   }
 );
 
+// GET /api/admin/departments
+
 router.get(
   "/departments",
   mockAuth,
@@ -87,23 +114,6 @@ router.get(
     });
 
     res.json(departments);
-  }
-);
-
-router.patch(
-  "/conversations/:conversationId/reassign",
-  mockAuth,
-  requireRole("admin"),
-  async (req: Request, res: Response) => {
-    const { conversationId } = req.params;
-    const { departmentId } = req.body;
-
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { departmentId },
-    });
-
-    res.json({ success: true });
   }
 );
 

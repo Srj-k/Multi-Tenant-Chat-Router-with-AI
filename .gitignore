@@ -11,7 +11,6 @@ npm-debug.log*
 
 # Environment
 .env
-.env.*
 
 # Prisma
 *.db

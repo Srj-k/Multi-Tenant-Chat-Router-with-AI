@@ -74,27 +74,6 @@ npm run dev
 
 ---
 
-## Webhook Endpoint
-
-**POST /webhook/message**
-
-**Request Payload**
-
-```json
-{
-  "businessId": "business_1",
-  "message": "I want to know the price"
-}
-```
-
-**Response**
-
-```json
-{
-  "status": "Received"
-}
-```
-
 ## Day 2 - Prisma, SQLite, and multi-tenant schema
 
 - Integrated Prisma ORM with SQLite
@@ -120,38 +99,61 @@ This schema design represents mulit-tenant business model where each business ca
 
 ```prisma
 model Business {
-  id        String   @id @default(uuid())
-  name      String
-  departments    Department[]
-  chats     Conversation[]
-  createdAt DateTime @default(now())
+  id          String         @id @default(uuid())
+  name        String
+  departments Department[]
+  chats       Conversation[]
+  users       User[]
+  createdAt   DateTime       @default(now())
 }
 
 model Department {
-  id         String   @id @default(uuid())
+  id         String         @id @default(uuid())
   name       String
   businessId String
-  business   Business @relation(fields: [businessId], references: [id])
-  createdAt  DateTime @default(now())
+  business   Business       @relation(fields: [businessId], references: [id])
+  chats      Conversation[]
+  users      User[]
+  createdAt  DateTime       @default(now())
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         UserType
+  businessId   String
+  departmentId String?
+
+  business   Business    @relation(fields: [businessId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
+
+  conversations Conversation[] @relation("AgentConversations")
 }
 
 model Conversation {
-  id         String    @id @default(uuid())
-  businessId String
-  department String
-  status     String
-  messages   Message[]
-  business   Business  @relation(fields: [businessId], references: [id])
-  createdAt  DateTime  @default(now())
+  id              String             @id @default(uuid())
+  businessId      String
+  departmentId    String?
+  assignedAgentId String?
+  status          ConversationStatus
+
+  business      Business    @relation(fields: [businessId], references: [id])
+  department    Department? @relation(fields: [departmentId], references: [id])
+  assignedAgent User?       @relation("AgentConversations", fields: [assignedAgentId], references: [id])
+
+  messages  Message[]
+  createdAt DateTime  @default(now())
 }
 
 model Message {
-  id             String        @id @default(uuid())
+  id             String     @id @default(uuid())
   conversationId String
-  sender         String
+  sender         SenderType
   content        String
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  createdAt      DateTime      @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  createdAt    DateTime     @default(now())
 }
 ```
 
@@ -194,6 +196,12 @@ Conversation Assignment
 - Monitor department-wise traffic
 - Multi-tenant isolation enforced at API level
 
+### Mock Message API
+
+| Method | Endpoint        | Description                 |
+| ------ | --------------- | --------------------------- |
+| POST   | `/api/messages` | Client sends message to app |
+
 ### Admin Routes
 
 | Method | Endpoint                                            | Description                                   |
@@ -219,6 +227,7 @@ Conversation Assignment
 | GET    | `/api/agent/chats`                          | List all conversations for agent’s department |
 | GET    | `/api/agent/chats/:conversationId`          | Get messages for a specific conversation      |
 | POST   | `/api/agent/chats/:conversationId/messages` | Send a message in a conversation              |
+| PATCH  | `/api/agent/chats/:conversationId/close`    | To close a chat                               |
 
 ### Authentication & Authorization (Mocked)
 
