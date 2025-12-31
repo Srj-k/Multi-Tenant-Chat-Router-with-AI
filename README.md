@@ -56,7 +56,20 @@ cd backend
 npm install
 ```
 
-4. Start development server
+4. Add seed data
+
+```
+npx prisma migrate dev --name init --schema=src/prisma/schema.prisma
+npx prisma db seed
+```
+
+5. View Database
+
+```
+npx prisma studio --schema=src/prisma/schema.prisma
+```
+
+6. Start development server
 
 ```
 npm run dev
